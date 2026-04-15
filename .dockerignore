@@ -1,0 +1,11 @@
+node_modules
+.git
+.gitignore
+.savegame
+certs
+*.md
+*.log
+LICENSE
+doom1*.wad:Zone.Identifier
+doomgeneric/doomgeneric/build_server
+doomgeneric/doomgeneric/doomgeneric_server

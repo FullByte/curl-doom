@@ -1,0 +1,41 @@
+services:
+  curl-doom:
+    build: .
+    container_name: curl-doom
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    ports:
+      - "666:8666"   # HTTP
+      - "443:8443"   # HTTPS (only active when certs are mounted)
+    volumes:
+      - ./certs:/app/certs:ro          # TLS certificates (optional)
+      - ./data:/data                   # Persistent runtime stats and logs
+    environment:
+      - PORT=8666
+      - TLS_PORT=8443
+      - ACCESS_TOKEN=slayer
+      - IWAD_PATH=${IWAD_PATH:-/app/doom1.wad}
+      - PWAD_PATHS=${PWAD_PATHS:-}
+      - WARP_EPISODE=${WARP_EPISODE:-1}
+      - WARP_MAP=${WARP_MAP:-1}
+      - DOOM_SKILL=${DOOM_SKILL:-3}
+      - DEBUG_SERVER=${DEBUG_SERVER:-0}
+      - DEBUG_VERBOSE_TICKS=${DEBUG_VERBOSE_TICKS:-0}
+      - DEBUG_TICK_SLOW_MS=${DEBUG_TICK_SLOW_MS:-250}
+      - APP_VERSION=${APP_VERSION:-0.1}
+      - STATS_ENABLED=${STATS_ENABLED:-1}
+      - STATS_LOG_PATH=${STATS_LOG_PATH:-/data/curl-doom-input-stats.jsonl}
+      - STATS_STATE_PATH=${STATS_STATE_PATH:-/data/curl-doom-runtime-stats.json}
+    # Resource caps:
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 512M

@@ -1,0 +1,14 @@
+*.o
+*.obj
+*.exe
+*.DS_Store
+*.log
+*.user
+*~
+.vs/
+Debug/
+Release/
+Build/
+# Ignore the compiled binary, not the source directory
+/doomgeneric_server
+doomgeneric.map
