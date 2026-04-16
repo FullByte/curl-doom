@@ -1778,6 +1778,7 @@ function setupHelpDialog() {
 setupHelpDialog();
 setupHoverTooltips();
 render(initialStats);
+refresh();
 setInterval(refresh, 5000);
 </script>
 </div>
@@ -2028,10 +2029,7 @@ app.get('/', (req, res) => {
     display: block;
   }
   .dashboard-shell {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: minmax(0, 1fr) 260px;
-    align-items: start;
+    display: block;
   }
   .main-stage {
     display: grid;
@@ -2040,11 +2038,13 @@ app.get('/', (req, res) => {
   .side-rail {
     display: grid;
     gap: .85rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: .95rem;
   }
   .side-card {
     padding: .1rem 0 0;
-    border-left: 1px solid #1c3145;
-    padding-left: .9rem;
+    border-top: 1px solid #1c3145;
+    padding-top: .8rem;
   }
   .side-title {
     margin: 0 0 .65rem;
@@ -2265,14 +2265,7 @@ app.get('/', (req, res) => {
   }
   @media (max-width: 980px) {
     .hero-top { flex-direction: column; align-items: center; }
-    .dashboard-shell { grid-template-columns: 1fr; }
     .side-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .side-card {
-      border-left: none;
-      border-top: 1px solid #1c3145;
-      padding-left: 0;
-      padding-top: .8rem;
-    }
   }
   @media (max-width: 620px) {
     body { padding: .55rem; }
@@ -2443,7 +2436,7 @@ app.get('/', (req, res) => {
       <section class="panel side-card" aria-labelledby="live-stats-title">
         <h2 class="side-title" id="live-stats-title">Live Stats</h2>
         <div class="mini-kpis" id="kpis">
-          <div class="mini-kpi"><div class="label">Sessions</div><div class="val" id="kpi-sessions">0</div></div>
+          <div class="mini-kpi"><div class="label">Sessions (Created/Ended/Active)</div><div class="val" id="kpi-sessions">0 / 0 / 0</div></div>
           <div class="mini-kpi"><div class="label">Total Inputs</div><div class="val" id="kpi-inputs">0</div></div>
           <div class="mini-kpi"><div class="label">Last Update</div><div class="val" id="kpi-now">-</div></div>
         </div>
@@ -2476,7 +2469,7 @@ function setText(id, value) {
 
 function renderKpis(data) {
   const activeCount = Array.isArray(data.activeSessions) ? data.activeSessions.length : Number(data.activeSessionCount || 0);
-  setText('kpi-sessions', fmtNum(activeCount));
+  setText('kpi-sessions', fmtNum(data.sessionsCreated) + ' / ' + fmtNum(data.sessionsEnded) + ' / ' + fmtNum(activeCount));
   setText('kpi-inputs', fmtNum(data.totalInputEvents));
   setText('kpi-now', data.now ? new Date(data.now).toLocaleTimeString() : '-');
   setText('updated', 'updated ' + new Date().toLocaleTimeString());
