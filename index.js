@@ -1762,9 +1762,7 @@ function renderSessions(data) {
   const body = document.getElementById('session-body');
   const empty = document.getElementById('session-empty');
   body.innerHTML = '';
-  const sessions = (data.activeSessions || [])
-    .filter(s => mapLabelOfSession(s) === selectedMapName)
-    .filter(s => !hiddenPlayers.has(s.sessionId));
+  const sessions = data.activeSessions || [];
   if (!sessions.length) {
     empty.style.display = 'block';
     return;
@@ -2893,9 +2891,7 @@ function renderSessions(data) {
   const body = document.getElementById('session-body');
   const empty = document.getElementById('session-empty');
   body.innerHTML = '';
-  const sessions = (data.activeSessions || [])
-    .filter(s => mapLabelOfSession(s) === selectedMapName)
-    .filter(s => !hiddenPlayers.has(s.sessionId));
+  const sessions = data.activeSessions || [];
   if (!sessions.length) {
     empty.style.display = 'block';
     return;
