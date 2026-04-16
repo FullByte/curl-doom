@@ -2278,12 +2278,6 @@ app.get('/', (req, res) => {
         <button type="button" class="copy-btn help" id="open-help-btn">Help</button>
         <button type="button" class="copy-btn secondary" id="open-video-btn">Demo Video</button>
         <span class="copy-status" id="copy-cmd-status"></span>
-        <span>·</span>
-        <span>Version ${APP_VERSION}</span>
-        <span>·</span>
-        <a href="/stats.json">JSON</a>
-        <span>·</span>
-        <span id="updated">updating...</span>
       </div>
     </div>
 
@@ -2401,16 +2395,6 @@ app.get('/', (req, res) => {
       <div id="map-caption" class="map-caption">No active player positions yet.</div>
     </section>
 
-    <section class="panel sessions">
-      <h2>Active Players</h2>
-      <div style="overflow:auto;">
-        <table>
-          <thead><tr><th data-tip="Unique server-side session identifier.">Session</th><th data-tip="Anonymized hash of the client IP address.">IP Hash</th><th data-tip="Count of input events sent in this session.">Events</th><th data-tip="Player world coordinates x, y, z.">Position (x,y,z)</th><th data-tip="Current map label, for example E1M1.">Map</th><th data-tip="Current player health points.">Health</th><th data-tip="Current player armor points.">Armor</th><th data-tip="Secrets found over total and percentage for current map.">Secrets</th><th data-tip="Currently equipped weapon.">Weapon</th><th data-tip="Owned keycards and skull keys. BC/YC/RC and BS/YS/RS.">Keys/Skulls</th><th data-tip="Ammo totals in order: clip/shell/cell/misl.">Ammo</th></tr></thead>
-          <tbody id="session-body"></tbody>
-        </table>
-      </div>
-      <div id="session-empty" class="empty" style="display:none;">No active sessions.</div>
-    </section>
   </div>
   <aside class="side-stats" aria-labelledby="live-stats-title">
     <h2 id="live-stats-title">Live Stats</h2>
@@ -2421,6 +2405,26 @@ app.get('/', (req, res) => {
     </div>
   </aside>
   </div>
+
+  <section class="panel sessions">
+    <h2>Active Players</h2>
+    <div style="overflow:auto;">
+      <table>
+        <thead><tr><th data-tip="Unique server-side session identifier.">Session</th><th data-tip="Anonymized hash of the client IP address.">IP Hash</th><th data-tip="Count of input events sent in this session.">Events</th><th data-tip="Player world coordinates x, y, z.">Position (x,y,z)</th><th data-tip="Current map label, for example E1M1.">Map</th><th data-tip="Current player health points.">Health</th><th data-tip="Current player armor points.">Armor</th><th data-tip="Secrets found over total and percentage for current map.">Secrets</th><th data-tip="Currently equipped weapon.">Weapon</th><th data-tip="Owned keycards and skull keys. BC/YC/RC and BS/YS/RS.">Keys/Skulls</th><th data-tip="Ammo totals in order: clip/shell/cell/misl.">Ammo</th></tr></thead>
+        <tbody id="session-body"></tbody>
+      </table>
+    </div>
+    <div id="session-empty" class="empty" style="display:none;">No active sessions.</div>
+  </section>
+
+  <p class="sub" style="text-align:center; margin:.35rem 0 0 0;">
+    <span>·</span>
+    <span>Version ${APP_VERSION}</span>
+    <span>·</span>
+    <a href="/stats.json">JSON</a>
+    <span>·</span>
+    <span id="updated">updating...</span>
+  </p>
 
   <p class="footer">cURL DOOM Mod by <a href="https://github.com/FullByte">FullByte</a> · cURL DOOM by: <a href="https://github.com/xsawyerx/curl-doom">Sawyer X</a> · <a href="https://github.com/ozkl/doomgeneric">doomgeneric</a>: ozkl · DOOM: id Software, 1993</p>
 </div>
