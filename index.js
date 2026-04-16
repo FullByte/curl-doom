@@ -813,6 +813,7 @@ function getClientIp(req) {
 if (ACCESS_TOKEN) {
   app.use((req, res, next) => {
     if (req.path === '/health') return next();
+    if (req.path === '/favicon.ico') return next();
     if (req.path === '/stats' && req.method === 'GET') return next();
     // Let browsers see the HTML landing page (they can't play without the token).
     if (req.path === '/' && req.method === 'GET') {
@@ -829,6 +830,10 @@ if (ACCESS_TOKEN) {
     res.status(403).send('#!/bin/sh\necho "Access denied. Wrong or missing token." >&2\nexit 1\n');
   });
 }
+
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
 
 // Global rate limiter: max 600 requests per minute per IP.
 // Each /tick is one request, so gameplay alone needs ~300-400/min.
@@ -962,6 +967,12 @@ app.get('/stats.json', (req, res) => {
     res.status(503).json({ status: 'disabled' });
     return;
   }
+  // Prevent browser/CDN/proxy caching so live dashboards always reflect
+  // current in-memory session/runtime state.
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
   res.json(buildStatsSnapshot());
 });
 
@@ -1734,7 +1745,7 @@ function render(data) {
 
 async function refresh() {
   try {
-    const res = await fetch('/stats.json', { cache: 'no-store' });
+    const res = await fetch('/stats.json?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     render(data);
@@ -2813,7 +2824,7 @@ function render(data) {
 
 async function refresh() {
   try {
-    const res = await fetch('/stats.json', { cache: 'no-store' });
+    const res = await fetch('/stats.json?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     render(data);
