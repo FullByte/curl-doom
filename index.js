@@ -813,6 +813,7 @@ function getClientIp(req) {
 if (ACCESS_TOKEN) {
   app.use((req, res, next) => {
     if (req.path === '/health') return next();
+    if (req.path === '/favicon.ico') return next();
     if (req.path === '/stats' && req.method === 'GET') return next();
     // Let browsers see the HTML landing page (they can't play without the token).
     if (req.path === '/' && req.method === 'GET') {
@@ -829,6 +830,10 @@ if (ACCESS_TOKEN) {
     res.status(403).send('#!/bin/sh\necho "Access denied. Wrong or missing token." >&2\nexit 1\n');
   });
 }
+
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
 
 // Global rate limiter: max 600 requests per minute per IP.
 // Each /tick is one request, so gameplay alone needs ~300-400/min.
@@ -1940,6 +1945,7 @@ app.get('/', (req, res) => {
   .cmd-line {
     display: block;
     width: 100%;
+    text-align: center;
     box-sizing: border-box;
     white-space: normal;
     overflow-wrap: anywhere;
@@ -2142,11 +2148,12 @@ app.get('/', (req, res) => {
     user-select: none;
   }
   .spoiler.revealed { color: #b6ebff; }
-  .content-shell { display:grid; gap:1rem; grid-template-columns:minmax(0,1fr) 250px; align-items:start; }
+  .content-shell { display:grid; gap:1rem; grid-template-columns: 320px minmax(0, 1fr); align-items:start; }
+  .left-rail { display:grid; gap:1rem; align-content:start; }
   .grid { display:grid; gap:1rem; grid-template-columns:repeat(12,minmax(0,1fr)); }
   .side-stats {
-    border-left: 1px solid #1c3145;
-    padding-left: .9rem;
+    border-right: 1px solid #1c3145;
+    padding-right: .9rem;
   }
   .side-stats h2 {
     margin: 0 0 .65rem;
@@ -2228,13 +2235,14 @@ app.get('/', (req, res) => {
   @media (max-width: 980px) {
     .hero-top { flex-direction: column; align-items: center; }
     .content-shell { grid-template-columns: 1fr; }
+    .left-rail { order: 2; }
+    .map { order: 1; }
     .side-stats {
-      border-left: none;
+      border-right: none;
       border-top: 1px solid #1c3145;
-      padding-left: 0;
+      padding-right: 0;
       padding-top: .8rem;
     }
-    .actions, .map { grid-column: 1 / -1; }
   }
   @media (max-width: 620px) {
     body { padding: .55rem; }
@@ -2379,31 +2387,30 @@ app.get('/', (req, res) => {
   </dialog>
 
   <div class="content-shell">
-  <div class="grid">
+  <aside class="left-rail">
+    <section class="side-stats" aria-labelledby="live-stats-title">
+      <h2 id="live-stats-title">Live Stats</h2>
+      <div class="mini-kpis" id="kpis">
+        <div class="mini-kpi"><div class="label">Sessions</div><div class="val" id="kpi-active">0</div></div>
+        <div class="mini-kpi"><div class="label">Total Inputs</div><div class="val" id="kpi-inputs">0</div></div>
+        <div class="mini-kpi"><div class="label">Last Update</div><div class="val" id="kpi-now">-</div></div>
+      </div>
+    </section>
 
     <section class="panel actions">
       <h2>Action Distribution</h2>
       <div id="action-bars" class="bars"></div>
       <div id="action-empty" class="empty" style="display:none;">No action data yet.</div>
     </section>
+  </aside>
 
     <section class="panel map">
-      <h2>Live Position Plot</h2>
+      <h2>Live Player Positions</h2>
       <div id="map-toggle-row" class="toggle-row"></div>
       <div id="player-toggle-row" class="toggle-row"></div>
       <div class="canvas-wrap"><canvas id="pos-canvas" width="820" height="260"></canvas></div>
       <div id="map-caption" class="map-caption">No active player positions yet.</div>
     </section>
-
-  </div>
-  <aside class="side-stats" aria-labelledby="live-stats-title">
-    <h2 id="live-stats-title">Live Stats</h2>
-    <div class="mini-kpis" id="kpis">
-      <div class="mini-kpi"><div class="label">Sessions</div><div class="val" id="kpi-active">0</div></div>
-      <div class="mini-kpi"><div class="label">Total Inputs</div><div class="val" id="kpi-inputs">0</div></div>
-      <div class="mini-kpi"><div class="label">Last Update</div><div class="val" id="kpi-now">-</div></div>
-    </div>
-  </aside>
   </div>
 
   <section class="panel sessions">
@@ -2417,16 +2424,7 @@ app.get('/', (req, res) => {
     <div id="session-empty" class="empty" style="display:none;">No active sessions.</div>
   </section>
 
-  <p class="sub" style="text-align:center; margin:.35rem 0 0 0;">
-    <span>·</span>
-    <span>Version ${APP_VERSION}</span>
-    <span>·</span>
-    <a href="/stats.json">JSON</a>
-    <span>·</span>
-    <span id="updated">updating...</span>
-  </p>
-
-  <p class="footer">cURL DOOM Mod by <a href="https://github.com/FullByte">FullByte</a> · cURL DOOM by: <a href="https://github.com/xsawyerx/curl-doom">Sawyer X</a> · <a href="https://github.com/ozkl/doomgeneric">doomgeneric</a>: ozkl · DOOM: id Software, 1993</p>
+  <p class="footer">cURL DOOM Mod by <a href="https://github.com/FullByte">FullByte</a> · cURL DOOM by: <a href="https://github.com/xsawyerx/curl-doom">Sawyer X</a> · <a href="https://github.com/ozkl/doomgeneric">doomgeneric</a>: ozkl · DOOM: id Software, 1993 · Version ${APP_VERSION} · <a href="/stats.json">JSON</a> · <span id="updated">updating...</span></p>
 </div>
 <div id="hover-tip" class="hover-tip" role="tooltip" aria-hidden="true"></div>
 
