@@ -1038,8 +1038,10 @@ app.get('/stats', (req, res) => {
   }
   .top {
     display: flex;
-    align-items: end;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     gap: 1rem;
     margin-bottom: 1rem;
   }
@@ -1055,7 +1057,15 @@ app.get('/stats', (req, res) => {
   .sub { color: var(--muted); font-size: .85rem; }
   a { color: var(--cool); text-decoration: none; }
   a:hover { color: #8be7ff; }
-  .toolbar { display: flex; gap: .8rem; align-items: center; color: var(--muted); font-size: .85rem; }
+  .toolbar {
+    display: flex;
+    gap: .55rem;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: .85rem;
+    flex-wrap: wrap;
+  }
   .toolbar-btn {
     border: 1px solid #2a4a61;
     background: #0f2232;
@@ -1081,7 +1091,7 @@ app.get('/stats', (req, res) => {
     grid-column: 1 / -1;
     display: grid;
     gap: .8rem;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .kpi {
     background: transparent;
@@ -1211,12 +1221,13 @@ app.get('/stats', (req, res) => {
     font-size: .78rem;
     line-height: 1.45;
   }
+  .footer-meta {
+    margin-top: 1rem;
+    color: #a8c5dd;
+    font-size: .82rem;
+    text-align: center;
+  }
   @media (max-width: 980px) {
-    .top {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .toolbar { flex-wrap: wrap; }
     .kpi-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
     .actions, .map { grid-column: 1 / -1; }
   }
@@ -1235,7 +1246,9 @@ app.get('/stats', (req, res) => {
   @media (prefers-reduced-motion: reduce) {
     .crt-overlay { animation: none; }
   }
-</style></head><body>
+</style>
+<script defer src="https://umami.0xfab1.net/script.js" data-website-id="cf4e88b2-e7f6-4170-837f-4cc8cb18ecce"></script>
+</head><body>
   <div class="crt-vignette" aria-hidden="true"></div>
   <div class="crt-overlay" aria-hidden="true"></div>
 <div class="wrap">
@@ -1246,14 +1259,8 @@ app.get('/stats', (req, res) => {
     </div>
     <div class="toolbar">
       <a href="/">Back</a>
-      <span>·</span>
-      <span>Version ${APP_VERSION}</span>
-      <span>·</span>
       <button type="button" class="toolbar-btn" id="open-help-btn">Help</button>
-      <span>·</span>
-      <a href="/stats.json">JSON</a>
-      <span>·</span>
-      <span id="updated">updating...</span>
+      <a href="https://youtu.be/N5JphX56r5U" target="_blank" rel="noopener noreferrer">Demo Video</a>
     </div>
   </div>
 
@@ -1302,10 +1309,7 @@ app.get('/stats', (req, res) => {
 
   <div class="grid">
     <div class="kpi-grid" id="kpis">
-      <div class="kpi"><div class="label">Uptime Started</div><div class="val" id="kpi-started">-</div></div>
-      <div class="kpi"><div class="label">Sessions Created</div><div class="val" id="kpi-created">0</div></div>
-      <div class="kpi"><div class="label">Sessions Ended</div><div class="val" id="kpi-ended">0</div></div>
-      <div class="kpi"><div class="label">Active Sessions</div><div class="val" id="kpi-active">0</div></div>
+      <div class="kpi"><div class="label">Sessions (Created/Ended/Active)</div><div class="val" id="kpi-sessions">0 / 0 / 0</div></div>
       <div class="kpi"><div class="label">Total Inputs</div><div class="val" id="kpi-inputs">0</div></div>
       <div class="kpi"><div class="label">Last Update</div><div class="val" id="kpi-now">-</div></div>
     </div>
@@ -1335,6 +1339,8 @@ app.get('/stats', (req, res) => {
       <div id="session-empty" class="empty" style="display:none;">No active sessions.</div>
     </section>
   </div>
+
+  <p class="footer-meta">Version ${APP_VERSION} <a href="/stats.json">JSON</a> <span id="updated">updating...</span></p>
 </div>
 <div id="hover-tip" class="hover-tip" role="tooltip" aria-hidden="true"></div>
 
@@ -1351,10 +1357,7 @@ function setText(id, value) {
 }
 
 function renderKpis(data) {
-  setText('kpi-started', data.startedAt ? new Date(data.startedAt).toLocaleTimeString() : '-');
-  setText('kpi-created', fmtNum(data.sessionsCreated));
-  setText('kpi-ended', fmtNum(data.sessionsEnded));
-  setText('kpi-active', fmtNum(data.activeSessionCount));
+  setText('kpi-sessions', fmtNum(data.sessionsCreated) + ' / ' + fmtNum(data.sessionsEnded) + ' / ' + fmtNum(data.activeSessionCount));
   setText('kpi-inputs', fmtNum(data.totalInputEvents));
   setText('kpi-now', data.now ? new Date(data.now).toLocaleTimeString() : '-');
   setText('updated', 'updated ' + new Date().toLocaleTimeString());
@@ -1887,8 +1890,10 @@ app.get('/', (req, res) => {
   }
   .hero-top {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     gap: 1rem;
   }
   .hero-play {
@@ -1906,8 +1911,8 @@ app.get('/', (req, res) => {
     font-size: clamp(1.1rem, 4.6vw, 2.1rem);
   }
   .sub { color: var(--muted); font-size: .85rem; }
-  .toolbar { display:flex; gap:.65rem; align-items:center; color:var(--muted); font-size:.82rem; flex-wrap:wrap; }
-  .hero-toolbar { justify-content: flex-end; }
+  .toolbar { display:flex; gap:.45rem; align-items:center; color:var(--muted); font-size:.82rem; flex-wrap:wrap; justify-content:center; }
+  .hero-toolbar { justify-content: center; }
   a { color: var(--cool); text-decoration: none; }
   a:hover { color: #8be7ff; }
   .hero-lead {
@@ -1927,13 +1932,23 @@ app.get('/', (req, res) => {
     margin: 0;
   }
   .cmd-row {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
   }
   .cmd-line-wrap {
     display: block;
-    width: 100%;
+    flex: 1 1 auto;
     min-width: 0;
     overflow: visible;
+  }
+  .cmd-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .5rem;
+    margin-left: auto;
+    white-space: nowrap;
   }
   .cmd-line {
     display: block;
@@ -2167,8 +2182,14 @@ app.get('/', (req, res) => {
     color: #72879a;
     font-size: .78rem;
   }
+  .footer-meta {
+    margin-top: 1rem;
+    color: #a8c5dd;
+    font-size: .82rem;
+    text-align: center;
+  }
   @media (max-width: 980px) {
-    .hero-top { flex-direction: column; align-items: flex-start; }
+    .hero-top { flex-direction: column; align-items: center; }
     .kpi-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
     .actions, .map { grid-column: 1 / -1; }
   }
@@ -2180,10 +2201,18 @@ app.get('/', (req, res) => {
     .hero { padding: .2rem 0 .35rem; }
     .hero-top { gap: .45rem; }
     .toolbar { gap: .45rem; font-size: .78rem; }
-    .hero-toolbar { justify-content: flex-start; }
+    .hero-toolbar { justify-content: center; }
     .cmd-line {
       font-size: .92rem;
       padding: .1rem 0;
+    }
+    .cmd-row {
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    .cmd-copy {
+      width: 100%;
+      justify-content: flex-end;
     }
     .copy-btn { padding: .42rem .52rem; }
     .copy-status { min-width: 0; }
@@ -2199,7 +2228,9 @@ app.get('/', (req, res) => {
   @media (prefers-reduced-motion: reduce) {
     .crt-overlay { animation: none; }
   }
-</style></head><body>
+</style>
+<script defer src="https://umami.0xfab1.net/script.js" data-website-id="cf4e88b2-e7f6-4170-837f-4cc8cb18ecce"></script>
+</head><body>
   <div class="crt-vignette" aria-hidden="true"></div>
   <div class="crt-overlay" aria-hidden="true"></div>
 <div class="wrap">
@@ -2212,14 +2243,7 @@ app.get('/', (req, res) => {
       <div class="toolbar hero-toolbar">
         <button type="button" class="copy-btn secondary" id="open-controls-btn">Controls</button>
         <button type="button" class="copy-btn help" id="open-help-btn">Help</button>
-        <button type="button" class="copy-btn" id="copy-cmd-btn">Copy Command</button>
-        <span class="copy-status" id="copy-cmd-status"></span>
-        <span>·</span>
-        <span>Version ${APP_VERSION}</span>
-        <span>·</span>
-        <a href="/stats.json">JSON</a>
-        <span>·</span>
-        <span id="updated">updating...</span>
+        <a href="https://youtu.be/N5JphX56r5U" target="_blank" rel="noopener noreferrer">Demo Video</a>
       </div>
     </div>
 
@@ -2227,6 +2251,10 @@ app.get('/', (req, res) => {
       <div class="cmd-row">
         <div class="cmd-line-wrap">
           <code class="cmd-line" id="cmd-line"><span class="cmd-strong">Play Now:</span> curl -sL -H "Authorization: Bearer <span class="spoiler" id="token-spoiler" title="Click to reveal">slayer</span>" doom.yolo.omg.lol:666 | bash</code>
+        </div>
+        <div class="cmd-copy">
+          <button type="button" class="copy-btn" id="copy-cmd-btn">Copy Command</button>
+          <span class="copy-status" id="copy-cmd-status"></span>
         </div>
       </div>
     </div>
@@ -2301,10 +2329,7 @@ app.get('/', (req, res) => {
 
   <div class="grid">
     <div class="kpi-grid" id="kpis">
-      <div class="kpi"><div class="label">Uptime Started</div><div class="val" id="kpi-started">-</div></div>
-      <div class="kpi"><div class="label">Sessions Created</div><div class="val" id="kpi-created">0</div></div>
-      <div class="kpi"><div class="label">Sessions Ended</div><div class="val" id="kpi-ended">0</div></div>
-      <div class="kpi"><div class="label">Active Sessions</div><div class="val" id="kpi-active">0</div></div>
+      <div class="kpi"><div class="label">Sessions (Created/Ended/Active)</div><div class="val" id="kpi-sessions">0 / 0 / 0</div></div>
       <div class="kpi"><div class="label">Total Inputs</div><div class="val" id="kpi-inputs">0</div></div>
       <div class="kpi"><div class="label">Last Update</div><div class="val" id="kpi-now">-</div></div>
     </div>
@@ -2335,6 +2360,7 @@ app.get('/', (req, res) => {
     </section>
   </div>
 
+  <p class="footer-meta">Version ${APP_VERSION} <a href="/stats.json">JSON</a> <span id="updated">updating...</span></p>
   <p class="footer">cURL DOOM Mod by <a href="https://github.com/FullByte">FullByte</a> · cURL DOOM by: <a href="https://github.com/xsawyerx/curl-doom">Sawyer X</a> · <a href="https://github.com/ozkl/doomgeneric">doomgeneric</a>: ozkl · DOOM: id Software, 1993</p>
 </div>
 <div id="hover-tip" class="hover-tip" role="tooltip" aria-hidden="true"></div>
@@ -2352,10 +2378,7 @@ function setText(id, value) {
 }
 
 function renderKpis(data) {
-  setText('kpi-started', data.startedAt ? new Date(data.startedAt).toLocaleTimeString() : '-');
-  setText('kpi-created', fmtNum(data.sessionsCreated));
-  setText('kpi-ended', fmtNum(data.sessionsEnded));
-  setText('kpi-active', fmtNum(data.activeSessionCount));
+  setText('kpi-sessions', fmtNum(data.sessionsCreated) + ' / ' + fmtNum(data.sessionsEnded) + ' / ' + fmtNum(data.activeSessionCount));
   setText('kpi-inputs', fmtNum(data.totalInputEvents));
   setText('kpi-now', data.now ? new Date(data.now).toLocaleTimeString() : '-');
   setText('updated', 'updated ' + new Date().toLocaleTimeString());
