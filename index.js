@@ -2475,7 +2475,8 @@ function setText(id, value) {
 }
 
 function renderKpis(data) {
-  setText('kpi-sessions', fmtNum(data.activeSessionCount));
+  const activeCount = Array.isArray(data.activeSessions) ? data.activeSessions.length : Number(data.activeSessionCount || 0);
+  setText('kpi-sessions', fmtNum(activeCount));
   setText('kpi-inputs', fmtNum(data.totalInputEvents));
   setText('kpi-now', data.now ? new Date(data.now).toLocaleTimeString() : '-');
   setText('updated', 'updated ' + new Date().toLocaleTimeString());
@@ -2594,6 +2595,7 @@ function setupHoverTooltips() {
 function renderActionBars(data) {
   const container = document.getElementById('action-bars');
   const empty = document.getElementById('action-empty');
+  if (!container || !empty) return;
   container.innerHTML = '';
   const rows = (data.actionTotals || []).slice(0, 8);
   if (!rows.length) {
@@ -2654,6 +2656,7 @@ function syncMapSelection(data) {
 function renderMapToggles(data) {
   const maps = syncMapSelection(data);
   const row = document.getElementById('map-toggle-row');
+  if (!row) return;
   row.innerHTML = '';
   if (!maps.length) return;
   for (const mapName of maps) {
@@ -2671,6 +2674,7 @@ function renderMapToggles(data) {
 
 function renderPlayerToggles(data) {
   const row = document.getElementById('player-toggle-row');
+  if (!row) return;
   row.innerHTML = '';
   const sessions = (data.activeSessions || []).filter(s => mapLabelOfSession(s) === selectedMapName);
   for (const s of sessions) {
@@ -2693,7 +2697,9 @@ function renderPlayerToggles(data) {
 function drawPositions(data) {
   const canvas = document.getElementById('pos-canvas');
   const cap = document.getElementById('map-caption');
+  if (!canvas || !cap) return;
   const ctx = canvas.getContext('2d');
+  if (!ctx) return;
   const filteredSessions = (data.activeSessions || [])
     .filter(s => mapLabelOfSession(s) === selectedMapName)
     .filter(s => !hiddenPlayers.has(s.sessionId));
@@ -2796,6 +2802,7 @@ function drawPositions(data) {
 function renderSessions(data) {
   const body = document.getElementById('session-body');
   const empty = document.getElementById('session-empty');
+  if (!body || !empty) return;
   body.innerHTML = '';
   const sessions = data.activeSessions || [];
   if (!sessions.length) {
@@ -2851,6 +2858,7 @@ async function refresh() {
     const data = await res.json();
     render(data);
   } catch (err) {
+    console.error('stats refresh failed', err);
     setText('updated', 'update failed: ' + err.message);
   }
 }
@@ -2991,6 +2999,7 @@ async function refresh() {
   })();
 
 render(initialStats);
+refresh();
 setInterval(refresh, 5000);
 </script>
 </body></html>`);
