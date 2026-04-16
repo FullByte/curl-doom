@@ -1887,8 +1887,10 @@ app.get('/', (req, res) => {
   }
   .hero-top {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     gap: 1rem;
   }
   .hero-play {
@@ -1906,8 +1908,8 @@ app.get('/', (req, res) => {
     font-size: clamp(1.1rem, 4.6vw, 2.1rem);
   }
   .sub { color: var(--muted); font-size: .85rem; }
-  .toolbar { display:flex; gap:.65rem; align-items:center; color:var(--muted); font-size:.82rem; flex-wrap:wrap; }
-  .hero-toolbar { justify-content: flex-end; }
+  .toolbar { display:flex; gap:.55rem; align-items:center; color:var(--muted); font-size:.82rem; flex-wrap:wrap; justify-content:center; }
+  .hero-toolbar { justify-content: center; }
   a { color: var(--cool); text-decoration: none; }
   a:hover { color: #8be7ff; }
   .hero-lead {
@@ -1979,6 +1981,49 @@ app.get('/', (req, res) => {
     color: var(--muted);
     font-size: .78rem;
     min-width: 48px;
+  }
+  dialog.video-dialog {
+    width: min(920px, calc(100vw - 1.2rem));
+    margin: auto;
+    border: 1px solid #29425a;
+    padding: 0;
+    background: linear-gradient(180deg, rgba(8,16,24,.98), rgba(8,16,24,.94));
+    color: var(--ink);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, .52);
+  }
+  dialog.video-dialog::backdrop {
+    background: rgba(2, 7, 11, .72);
+    backdrop-filter: blur(2px);
+  }
+  .video-sheet { padding: 1rem; }
+  .video-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .8rem;
+    margin-bottom: .85rem;
+  }
+  .video-head h2 { margin: 0; }
+  .video-close {
+    border: 1px solid #2a4a61;
+    background: #0f2232;
+    color: #d5f1ff;
+    padding: .35rem .58rem;
+    cursor: pointer;
+    font: inherit;
+  }
+  .video-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #05090d;
+    border: 1px solid #22384c;
+  }
+  .video-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
   }
   dialog.controls-dialog {
     width: min(560px, calc(100vw - 1.2rem));
@@ -2097,11 +2142,24 @@ app.get('/', (req, res) => {
     user-select: none;
   }
   .spoiler.revealed { color: #b6ebff; }
+  .content-shell { display:grid; gap:1rem; grid-template-columns:minmax(0,1fr) 250px; align-items:start; }
   .grid { display:grid; gap:1rem; grid-template-columns:repeat(12,minmax(0,1fr)); }
-  .kpi-grid { grid-column:1/-1; display:grid; gap:.8rem; grid-template-columns:repeat(6,minmax(0,1fr)); }
-  .kpi { padding:.35rem 0 .55rem 0; border-bottom:1px solid #1c3145; }
-  .kpi .label { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
-  .kpi .val { font-family: 'Orbitron', sans-serif; font-size: 1.18rem; margin-top: .2rem; }
+  .side-stats {
+    border-left: 1px solid #1c3145;
+    padding-left: .9rem;
+  }
+  .side-stats h2 {
+    margin: 0 0 .65rem;
+    font-size: .86rem;
+  }
+  .mini-kpis { display:grid; gap:.65rem; }
+  .mini-kpi {
+    padding-bottom: .5rem;
+    border-bottom: 1px solid #1c3145;
+  }
+  .mini-kpi:last-child { border-bottom: none; padding-bottom: 0; }
+  .mini-kpi .label { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
+  .mini-kpi .val { font-family: 'Orbitron', sans-serif; font-size: .95rem; margin-top: .16rem; }
   .panel { background: transparent; border: none; padding: .25rem 0 0 0; }
   .actions { grid-column: span 5; }
   .map { grid-column: span 7; }
@@ -2168,8 +2226,14 @@ app.get('/', (req, res) => {
     font-size: .78rem;
   }
   @media (max-width: 980px) {
-    .hero-top { flex-direction: column; align-items: flex-start; }
-    .kpi-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .hero-top { flex-direction: column; align-items: center; }
+    .content-shell { grid-template-columns: 1fr; }
+    .side-stats {
+      border-left: none;
+      border-top: 1px solid #1c3145;
+      padding-left: 0;
+      padding-top: .8rem;
+    }
     .actions, .map { grid-column: 1 / -1; }
   }
   @media (max-width: 620px) {
@@ -2180,7 +2244,7 @@ app.get('/', (req, res) => {
     .hero { padding: .2rem 0 .35rem; }
     .hero-top { gap: .45rem; }
     .toolbar { gap: .45rem; font-size: .78rem; }
-    .hero-toolbar { justify-content: flex-start; }
+    .hero-toolbar { justify-content: center; }
     .cmd-line {
       font-size: .92rem;
       padding: .1rem 0;
@@ -2189,7 +2253,6 @@ app.get('/', (req, res) => {
     .copy-status { min-width: 0; }
     .controls-head { align-items: flex-start; }
     .controls-grid { grid-template-columns: 1fr; }
-    .kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
     .bar-row { grid-template-columns: 90px 1fr 56px; }
     canvas { height: 220px; }
     th, td { padding: .4rem .35rem; }
@@ -2210,9 +2273,10 @@ app.get('/', (req, res) => {
         <div class="sub">Play from terminal, monitor live stats on this page</div>
       </div>
       <div class="toolbar hero-toolbar">
+        <button type="button" class="copy-btn" id="copy-cmd-btn">Copy Command</button>
         <button type="button" class="copy-btn secondary" id="open-controls-btn">Controls</button>
         <button type="button" class="copy-btn help" id="open-help-btn">Help</button>
-        <button type="button" class="copy-btn" id="copy-cmd-btn">Copy Command</button>
+        <button type="button" class="copy-btn secondary" id="open-video-btn">Demo Video</button>
         <span class="copy-status" id="copy-cmd-status"></span>
         <span>·</span>
         <span>Version ${APP_VERSION}</span>
@@ -2299,15 +2363,29 @@ app.get('/', (req, res) => {
     </div>
   </dialog>
 
-  <div class="grid">
-    <div class="kpi-grid" id="kpis">
-      <div class="kpi"><div class="label">Uptime Started</div><div class="val" id="kpi-started">-</div></div>
-      <div class="kpi"><div class="label">Sessions Created</div><div class="val" id="kpi-created">0</div></div>
-      <div class="kpi"><div class="label">Sessions Ended</div><div class="val" id="kpi-ended">0</div></div>
-      <div class="kpi"><div class="label">Active Sessions</div><div class="val" id="kpi-active">0</div></div>
-      <div class="kpi"><div class="label">Total Inputs</div><div class="val" id="kpi-inputs">0</div></div>
-      <div class="kpi"><div class="label">Last Update</div><div class="val" id="kpi-now">-</div></div>
+  <dialog class="video-dialog" id="video-dialog">
+    <div class="video-sheet">
+      <div class="video-head">
+        <div>
+          <h2>Demo Video</h2>
+          <div class="sub">Quick walkthrough of cURL DOOM in action</div>
+        </div>
+        <button type="button" class="video-close" id="close-video-btn">Close</button>
+      </div>
+      <div class="video-frame">
+        <iframe
+          id="demo-video-frame"
+          title="cURL DOOM Demo Video"
+          data-src="https://www.youtube-nocookie.com/embed/N5JphX56r5U?autoplay=1&rel=0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
     </div>
+  </dialog>
+
+  <div class="content-shell">
+  <div class="grid">
 
     <section class="panel actions">
       <h2>Action Distribution</h2>
@@ -2333,6 +2411,15 @@ app.get('/', (req, res) => {
       </div>
       <div id="session-empty" class="empty" style="display:none;">No active sessions.</div>
     </section>
+  </div>
+  <aside class="side-stats" aria-labelledby="live-stats-title">
+    <h2 id="live-stats-title">Live Stats</h2>
+    <div class="mini-kpis" id="kpis">
+      <div class="mini-kpi"><div class="label">Sessions</div><div class="val" id="kpi-active">0</div></div>
+      <div class="mini-kpi"><div class="label">Total Inputs</div><div class="val" id="kpi-inputs">0</div></div>
+      <div class="mini-kpi"><div class="label">Last Update</div><div class="val" id="kpi-now">-</div></div>
+    </div>
+  </aside>
   </div>
 
   <p class="footer">cURL DOOM Mod by <a href="https://github.com/FullByte">FullByte</a> · cURL DOOM by: <a href="https://github.com/xsawyerx/curl-doom">Sawyer X</a> · <a href="https://github.com/ozkl/doomgeneric">doomgeneric</a>: ozkl · DOOM: id Software, 1993</p>
@@ -2753,6 +2840,10 @@ async function refresh() {
     var helpBtn = document.getElementById('open-help-btn');
     var helpDialog = document.getElementById('help-dialog');
     var closeHelpBtn = document.getElementById('close-help-btn');
+    var videoBtn = document.getElementById('open-video-btn');
+    var videoDialog = document.getElementById('video-dialog');
+    var closeVideoBtn = document.getElementById('close-video-btn');
+    var videoFrame = document.getElementById('demo-video-frame');
 
     setupHoverTooltips();
 
@@ -2780,6 +2871,22 @@ async function refresh() {
       else helpDialog.removeAttribute('open');
     }
 
+    function openVideo() {
+      if (!videoDialog) return;
+      if (videoFrame && !videoFrame.getAttribute('src')) {
+        videoFrame.setAttribute('src', videoFrame.getAttribute('data-src') || '');
+      }
+      if (typeof videoDialog.showModal === 'function') videoDialog.showModal();
+      else videoDialog.setAttribute('open', 'open');
+    }
+
+    function closeVideo() {
+      if (!videoDialog) return;
+      if (typeof videoDialog.close === 'function') videoDialog.close();
+      else videoDialog.removeAttribute('open');
+      if (videoFrame) videoFrame.setAttribute('src', '');
+    }
+
     if (tokenEl) {
       tokenEl.addEventListener('click', function () {
         tokenEl.classList.toggle('revealed');
@@ -2802,6 +2909,14 @@ async function refresh() {
       closeHelpBtn.addEventListener('click', closeHelp);
     }
 
+    if (videoBtn) {
+      videoBtn.addEventListener('click', openVideo);
+    }
+
+    if (closeVideoBtn) {
+      closeVideoBtn.addEventListener('click', closeVideo);
+    }
+
     if (controlsDialog) {
       controlsDialog.addEventListener('click', function (event) {
         var rect = controlsDialog.getBoundingClientRect();
@@ -2815,6 +2930,17 @@ async function refresh() {
         var rect = helpDialog.getBoundingClientRect();
         var inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
         if (!inside) closeHelp();
+      });
+    }
+
+    if (videoDialog) {
+      videoDialog.addEventListener('click', function (event) {
+        var rect = videoDialog.getBoundingClientRect();
+        var inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+        if (!inside) closeVideo();
+      });
+      videoDialog.addEventListener('close', function () {
+        if (videoFrame) videoFrame.setAttribute('src', '');
       });
     }
 
