@@ -158,6 +158,7 @@ const runtimeStats = {
 
 const wadIndexCache = new Map();
 const mapGeometryCache = new Map();
+let availableMapsCache = null;
 let statsPersistTimer = null;
 
 function clampStatsArrays() {
@@ -383,6 +384,50 @@ function extractMapGeometryFromIndex(index, mapName) {
   };
 }
 
+function isMapMarkerName(name) {
+  return /^E\d+M\d+$/i.test(name) || /^MAP\d\d$/i.test(name);
+}
+
+function mapSortKey(name) {
+  const em = /^E(\d+)M(\d+)$/i.exec(name || '');
+  if (em) return [0, Number(em[1]), Number(em[2]), 0];
+  const m = /^MAP(\d\d)$/i.exec(name || '');
+  if (m) return [1, Number(m[1]), 0, 0];
+  return [2, 0, 0, String(name || '').toUpperCase()];
+}
+
+function compareMapNames(a, b) {
+  const ka = mapSortKey(a);
+  const kb = mapSortKey(b);
+  if (ka[0] !== kb[0]) return ka[0] - kb[0];
+  if (ka[1] !== kb[1]) return ka[1] - kb[1];
+  if (ka[2] !== kb[2]) return ka[2] - kb[2];
+  return String(ka[3]).localeCompare(String(kb[3]));
+}
+
+function getAvailableMapNames() {
+  if (availableMapsCache) return availableMapsCache;
+
+  const names = new Set();
+  const sourceWads = [...PWAD_PATHS, IWAD_PATH];
+  for (const wadPath of sourceWads) {
+    if (!wadPath || !fs.existsSync(wadPath)) continue;
+    try {
+      const index = readWadIndex(wadPath);
+      for (const lump of index.lumps) {
+        if (isMapMarkerName(lump.name)) names.add(lump.name.toUpperCase());
+      }
+    } catch (err) {
+      if (DEBUG_SERVER) {
+        console.error(`[stats] failed reading map list from ${wadPath}: ${err.message}`);
+      }
+    }
+  }
+
+  availableMapsCache = [...names].sort(compareMapNames);
+  return availableMapsCache;
+}
+
 function getMapGeometry(mapName) {
   if (!mapName) return null;
   if (mapGeometryCache.has(mapName)) return mapGeometryCache.get(mapName);
@@ -455,9 +500,16 @@ function buildStatsSnapshot() {
     .sort((a, b) => b[1] - a[1])
     .map(([action, count]) => ({ action, count }));
 
-  const mapNames = [...new Set(activeSessions.map(s => s.mapName).filter(Boolean))];
+  const activeMapNames = [...new Set(activeSessions.map(s => s.mapName).filter(Boolean))];
+  const mapSessionCounts = {};
+  for (const s of activeSessions) {
+    if (!s.mapName) continue;
+    mapSessionCounts[s.mapName] = (mapSessionCounts[s.mapName] || 0) + 1;
+  }
+  const availableMaps = [...new Set([...getAvailableMapNames(), ...activeMapNames])].sort(compareMapNames);
+
   const mapGeometries = {};
-  for (const mapName of mapNames) {
+  for (const mapName of activeMapNames) {
     const geometry = getMapGeometry(mapName);
     if (geometry) {
       mapGeometries[mapName] = geometry;
@@ -474,6 +526,8 @@ function buildStatsSnapshot() {
     activeSessionCount: activeSessions.length,
     totalInputEvents: runtimeStats.totalInputEvents,
     actionTotals,
+    availableMaps,
+    mapSessionCounts,
     activeSessions,
     mapGeometries,
     endedSessions: runtimeStats.endedSessions,
@@ -1099,7 +1153,7 @@ app.get('/stats', (req, res) => {
   .kpi .val { font-family: 'Orbitron', sans-serif; font-size: 1.18rem; margin-top: .2rem; }
   .actions { grid-column: span 5; }
   .map { grid-column: span 7; }
-  .sessions { grid-column: 1 / -1; }
+  .sessions { grid-column: 1 / -1; margin-top: .55rem; }
   h2 {
     margin: 0 0 .8rem;
     font-family: 'Orbitron', sans-serif;
@@ -1524,27 +1578,39 @@ function keysOwnedLabel(st) {
 }
 
 function syncMapSelection(data) {
-  const maps = [...new Set((data.activeSessions || []).map(mapLabelOfSession))].filter(Boolean);
+  const activeMaps = [...new Set((data.activeSessions || []).map(mapLabelOfSession))].filter(Boolean);
+  const availableMaps = Array.isArray(data.availableMaps) ? data.availableMaps.filter(Boolean) : [];
+  const maps = [...new Set([...availableMaps, ...activeMaps])];
   if (!maps.length) {
     selectedMapName = null;
-    return maps;
+    return { maps, activeSet: new Set() };
   }
   if (!selectedMapName || !maps.includes(selectedMapName)) {
     selectedMapName = maps[0];
   }
-  return maps;
+  return { maps, activeSet: new Set(activeMaps) };
 }
 
 function renderMapToggles(data) {
-  const maps = syncMapSelection(data);
+  const { maps, activeSet } = syncMapSelection(data);
   const row = document.getElementById('map-toggle-row');
   row.innerHTML = '';
   if (!maps.length) return;
   for (const mapName of maps) {
+    const activeCount = Number((data.mapSessionCounts || {})[mapName] || 0);
+    const hasActivePlayers = activeSet.has(mapName) || activeCount > 0;
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'chip' + (mapName === selectedMapName ? ' active' : '');
+    btn.className = 'chip'
+      + (mapName === selectedMapName ? ' active' : '')
+      + (hasActivePlayers ? '' : ' off');
     btn.textContent = mapName;
+    btn.setAttribute(
+      'data-tip',
+      hasActivePlayers
+        ? ('Active players on this level: ' + activeCount + '.')
+        : 'No active players on this level right now.'
+    );
     btn.addEventListener('click', () => {
       selectedMapName = mapName;
       render(data);
@@ -1643,9 +1709,17 @@ function drawPositions(data) {
   const spanY = Math.max(maxY - minY, 1);
 
   const pad = 20;
+  const availW = Math.max(canvas.width - pad * 2, 1);
+  const availH = Math.max(canvas.height - pad * 2, 1);
+  const scale = Math.min(availW / spanX, availH / spanY);
+  const drawW = spanX * scale;
+  const drawH = spanY * scale;
+  const offsetX = pad + (availW - drawW) / 2;
+  const offsetY = pad + (availH - drawH) / 2;
+
   const toCanvas = (x, y) => {
-    const px = pad + ((x - minX) / spanX) * (canvas.width - pad * 2);
-    const py = pad + ((y - minY) / spanY) * (canvas.height - pad * 2);
+    const px = offsetX + (x - minX) * scale;
+    const py = offsetY + (y - minY) * scale;
     return [px, canvas.height - py];
   };
 
@@ -2161,21 +2235,38 @@ app.get('/', (req, res) => {
   .grid { display:grid; gap:1rem; grid-template-columns:repeat(12,minmax(0,1fr)); }
   .side-stats { width: 100%; }
   .side-stats h2 {
-    margin: 0 0 .65rem;
-    font-size: .86rem;
+    margin: 0;
+    font-size: .82rem;
   }
-  .mini-kpis { display:grid; gap:.65rem; }
-  .mini-kpi {
-    padding-bottom: .5rem;
-    border-bottom: 1px solid #1c3145;
+  .stats-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .8rem;
+    width: 100%;
+    min-height: 28px;
   }
-  .mini-kpi:last-child { border-bottom: none; padding-bottom: 0; }
-  .mini-kpi .label { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
-  .mini-kpi .val { font-family: 'Orbitron', sans-serif; font-size: .95rem; margin-top: .16rem; }
+  .stat-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .35rem;
+    white-space: nowrap;
+  }
+  .stat-item .label {
+    color: var(--muted);
+    font-size: .66rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .stat-item .val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: .88rem;
+    line-height: 1;
+  }
   .panel { background: transparent; border: none; padding: .25rem 0 0 0; }
   .actions { grid-column: span 5; }
   .map { grid-column: span 7; }
-  .sessions { grid-column: 1 / -1; }
+  .sessions { grid-column: 1 / -1; margin-top: .55rem; }
   h2 {
     margin: 0 0 .8rem;
     font-family: 'Orbitron', sans-serif;
@@ -2251,6 +2342,10 @@ app.get('/', (req, res) => {
     .left-rail {
       border-right: none;
       padding-right: 0;
+    }
+    .stats-inline {
+      flex-wrap: wrap;
+      justify-content: flex-start;
     }
   }
   @media (max-width: 620px) {
@@ -2398,11 +2493,11 @@ app.get('/', (req, res) => {
   <div class="content-shell">
   <aside class="left-rail">
     <section class="side-stats" aria-labelledby="live-stats-title">
-      <h2 id="live-stats-title">Live Stats</h2>
-      <div class="mini-kpis" id="kpis">
-        <div class="mini-kpi"><div class="label">Sessions</div><div class="val" id="kpi-active">0</div></div>
-        <div class="mini-kpi"><div class="label">Total Inputs</div><div class="val" id="kpi-inputs">0</div></div>
-        <div class="mini-kpi"><div class="label">Last Update</div><div class="val" id="kpi-now">-</div></div>
+      <div class="stats-inline" id="kpis">
+        <h2 id="live-stats-title">Live Stats</h2>
+        <div class="stat-item"><span class="label">Sessions</span><span class="val" id="kpi-active">0</span></div>
+        <div class="stat-item"><span class="label">Total Inputs</span><span class="val" id="kpi-inputs">0</span></div>
+        <div class="stat-item"><span class="label">Last Update</span><span class="val" id="kpi-now">-</span></div>
       </div>
     </section>
 
@@ -2618,27 +2713,39 @@ function keysOwnedLabel(st) {
 }
 
 function syncMapSelection(data) {
-  const maps = [...new Set((data.activeSessions || []).map(mapLabelOfSession))].filter(Boolean);
+  const activeMaps = [...new Set((data.activeSessions || []).map(mapLabelOfSession))].filter(Boolean);
+  const availableMaps = Array.isArray(data.availableMaps) ? data.availableMaps.filter(Boolean) : [];
+  const maps = [...new Set([...availableMaps, ...activeMaps])];
   if (!maps.length) {
     selectedMapName = null;
-    return maps;
+    return { maps, activeSet: new Set() };
   }
   if (!selectedMapName || !maps.includes(selectedMapName)) {
     selectedMapName = maps[0];
   }
-  return maps;
+  return { maps, activeSet: new Set(activeMaps) };
 }
 
 function renderMapToggles(data) {
-  const maps = syncMapSelection(data);
+  const { maps, activeSet } = syncMapSelection(data);
   const row = document.getElementById('map-toggle-row');
   row.innerHTML = '';
   if (!maps.length) return;
   for (const mapName of maps) {
+    const activeCount = Number((data.mapSessionCounts || {})[mapName] || 0);
+    const hasActivePlayers = activeSet.has(mapName) || activeCount > 0;
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'chip' + (mapName === selectedMapName ? ' active' : '');
+    btn.className = 'chip'
+      + (mapName === selectedMapName ? ' active' : '')
+      + (hasActivePlayers ? '' : ' off');
     btn.textContent = mapName;
+    btn.setAttribute(
+      'data-tip',
+      hasActivePlayers
+        ? ('Active players on this level: ' + activeCount + '.')
+        : 'No active players on this level right now.'
+    );
     btn.addEventListener('click', () => {
       selectedMapName = mapName;
       render(data);
@@ -2730,9 +2837,17 @@ function drawPositions(data) {
   const spanX = Math.max(maxX - minX, 1);
   const spanY = Math.max(maxY - minY, 1);
   const pad = 20;
+  const availW = Math.max(canvas.width - pad * 2, 1);
+  const availH = Math.max(canvas.height - pad * 2, 1);
+  const scale = Math.min(availW / spanX, availH / spanY);
+  const drawW = spanX * scale;
+  const drawH = spanY * scale;
+  const offsetX = pad + (availW - drawW) / 2;
+  const offsetY = pad + (availH - drawH) / 2;
+
   const toCanvas = (x, y) => {
-    const px = pad + ((x - minX) / spanX) * (canvas.width - pad * 2);
-    const py = pad + ((y - minY) / spanY) * (canvas.height - pad * 2);
+    const px = offsetX + (x - minX) * scale;
+    const py = offsetY + (y - minY) * scale;
     return [px, canvas.height - py];
   };
 
